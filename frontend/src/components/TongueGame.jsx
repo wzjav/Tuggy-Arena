@@ -52,17 +52,17 @@ export default function TongueGame() {
   return (
     <div className="flex flex-col items-center gap-6">
       {/* Video Display */}
-      <div className="relative bg-gray-900 rounded-lg overflow-hidden shadow-2xl w-full max-w-4xl">
+      <div className="relative bg-gray-900 rounded-lg overflow-hidden shadow-2xl w-full max-w-4xl aspect-video">
         <video
           ref={videoRef}
           playsInline
           muted
-          className="w-full h-auto"
+          className="w-full h-full object-contain"
           style={{ transform: 'scaleX(-1)' }} // Mirror for user
         />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 pointer-events-none"
+          className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ transform: 'scaleX(-1)' }}
         />
         
