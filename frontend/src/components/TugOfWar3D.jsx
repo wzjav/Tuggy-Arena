@@ -261,25 +261,25 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
     : ropePosition >= 90
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 shadow-lg w-full max-w-4xl">
-      {/* Score Display */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-center">
-          <div className="text-sm text-gray-400 mb-1">You</div>
-          <div className="text-3xl font-bold text-blue-400">{Math.floor(userScore)}</div>
+    <div className="relative w-full h-full bg-gray-900">
+      {/* Score Display - Overlay at Top Center */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 flex gap-8 items-center">
+        <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
+          <div className="text-xs text-gray-400 mb-1">You</div>
+          <div className="text-4xl font-bold text-blue-400">{Math.floor(userScore)}</div>
         </div>
-        <div className="text-center">
-          <div className="text-sm text-gray-400 mb-1">VS</div>
-          <div className="text-lg text-gray-500">3D Tug of War</div>
+        <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
+          <div className="text-xs text-gray-400 mb-1">VS</div>
+          <div className="text-lg text-gray-300 font-semibold">3D Tug of War</div>
         </div>
-        <div className="text-center">
-          <div className="text-sm text-gray-400 mb-1">AI</div>
-          <div className="text-3xl font-bold text-red-400">{Math.floor(aiScore)}</div>
+        <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
+          <div className="text-xs text-gray-400 mb-1">AI</div>
+          <div className="text-4xl font-bold text-red-400">{Math.floor(aiScore)}</div>
         </div>
       </div>
 
-      {/* 3D Canvas */}
-      <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ height: '500px' }}>
+      {/* 3D Canvas - Full Screen */}
+      <div className="relative w-full h-full">
         <canvas
           ref={canvasRef}
           className="w-full h-full"
@@ -288,21 +288,21 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
 
         {/* Win/Lose Overlay */}
         {gameOver && (winner !== null || ropePosition <= 10 || ropePosition >= 90) && (
-          <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-30 rounded-lg">
+          <div className="absolute inset-0 bg-black bg-opacity-85 flex items-center justify-center z-30">
             <div className="text-center">
-              <div className={`text-6xl mb-4 ${userWins ? 'text-green-400' : 'text-red-400'}`}>
+              <div className={`text-8xl mb-6 ${userWins ? 'text-green-400' : 'text-red-400'}`}>
                 {userWins ? '🎉' : '😢'}
               </div>
-              <div className={`text-4xl font-bold mb-4 ${userWins ? 'text-green-400' : 'text-red-400'}`}>
+              <div className={`text-6xl font-bold mb-6 ${userWins ? 'text-green-400' : 'text-red-400'}`}>
                 {userWins ? 'YOU WIN!' : 'AI WINS!'}
               </div>
-              <div className="text-xl text-gray-300 mb-6">
+              <div className="text-2xl text-gray-300 mb-8">
                 {userWins ? 'Great job pulling!' : 'Better luck next time!'}
               </div>
               {onReset && (
                 <button
                   onClick={onReset}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-xl shadow-lg"
                 >
                   Play Again
                 </button>
@@ -310,11 +310,6 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Instructions */}
-      <div className="mt-4 text-center text-sm text-gray-400">
-        Move your tongue left and right to pull the rope to your side!
       </div>
     </div>
   )

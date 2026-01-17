@@ -113,13 +113,13 @@ export default function TongueGame() {
         try {
           await startDetection()
         } catch (err) {
-          console.error('Auto-start failed:', err)
+          // Error handled silently
         }
       }
     }
     
-    // Small delay to ensure video ref is set
-    const timer = setTimeout(start, 100)
+    // Small delay to ensure video ref is set and element is rendered
+    const timer = setTimeout(start, 300)
     
     return () => {
       mounted = false
@@ -141,63 +141,61 @@ export default function TongueGame() {
   }, [resetCount])
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full">
-      {/* Main Game Area - Side by Side Layout */}
-      <div className="flex flex-col lg:flex-row gap-6 w-full max-w-7xl">
-        {/* Left Side - Video Display */}
-        <div className="flex-1 flex flex-col gap-4">
-          <div className="relative bg-gray-900 rounded-lg overflow-hidden shadow-2xl w-full aspect-video">
-            <video
-              ref={videoRef}
-              playsInline
-              muted
-              className="w-full h-full object-contain"
-              style={{ transform: 'scaleX(-1)' }} // Mirror for user
-            />
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-            
-            {/* Overlay Status */}
-            {!isDetecting && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="text-white text-xl">
-                  {error ? `Error: ${error}` : 'Initializing...'}
-                </div>
-              </div>
-            )}
-            
-            {/* Detection Status Indicator */}
-            {isDetecting && (
-              <div className="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded text-sm">
-                <div>Status: {tongueState}</div>
-                <div>Count: {effectiveCount}</div>
-              </div>
-            )}
-          </div>
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Full Screen Game */}
+      <div className="absolute inset-0 w-full h-full">
+        <TugOfWar3D
+          userScore={effectiveCount}
+          aiScore={aiScore}
+          gameOver={gameOver}
+          onReset={handleReset}
+        />
+      </div>
 
-          {/* Counter Display */}
-          <TongueCounter count={effectiveCount} tongueState={tongueState} />
-        </div>
-
-        {/* Right Side - 3D Tug of War Game */}
-        <div className="flex-1">
-          <TugOfWar3D
-            userScore={effectiveCount}
-            aiScore={aiScore}
-            gameOver={gameOver}
-            onReset={handleReset}
+      {/* Camera Overlay - Top Left */}
+      <div className="absolute top-4 left-4 z-20 w-64 bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+        <div className="relative w-full aspect-video">
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            className="w-full h-full object-contain"
+            style={{ transform: 'scaleX(-1)' }} // Mirror for user
           />
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ transform: 'scaleX(-1)' }}
+          />
+          
+          {/* Overlay Status */}
+          {!isDetecting && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="text-white text-sm text-center px-2">
+                {error ? `Error: ${error}` : 'Initializing...'}
+              </div>
+            </div>
+          )}
+          
+          {/* Detection Status Indicator */}
+          {isDetecting && (
+            <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+              <div>Status: {tongueState}</div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex gap-4">
+      {/* Counter Display - Top Right */}
+      <div className="absolute top-4 right-4 z-20">
+        <TongueCounter count={effectiveCount} tongueState={tongueState} />
+      </div>
+
+      {/* Controls - Bottom Left */}
+      <div className="absolute bottom-4 left-4 z-20 flex gap-4">
         <button
           onClick={isActive ? stopDetection : startDetection}
-          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+          className={`px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg ${
             isActive
               ? 'bg-red-600 hover:bg-red-700 text-white'
               : 'bg-green-600 hover:bg-green-700 text-white'
@@ -208,23 +206,10 @@ export default function TongueGame() {
         
         <button
           onClick={handleReset}
-          className="px-6 py-3 rounded-lg font-semibold bg-gray-600 hover:bg-gray-700 text-white transition-colors"
+          className="px-6 py-3 rounded-lg font-semibold bg-gray-600 hover:bg-gray-700 text-white transition-colors shadow-lg"
         >
           Reset Game
         </button>
-      </div>
-
-      {/* Instructions */}
-      <div className="bg-black bg-opacity-30 rounded-lg p-4 max-w-4xl w-full">
-        <h3 className="text-white font-semibold mb-2">How to Play:</h3>
-        <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-          <li>Position your face in front of the camera</li>
-          <li>Open your mouth so your tongue is visible</li>
-          <li>Move your tongue left and right to increase your score</li>
-          <li>Each left→right or right→left movement counts as 1</li>
-          <li>Pull the rope to your side (10% threshold) to win!</li>
-          <li>The AI opponent will reactively increase difficulty as you score more</li>
-        </ul>
       </div>
     </div>
   )
