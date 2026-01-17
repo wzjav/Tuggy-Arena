@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@babylonjs/core": "^7.0.0",
+    "@babylonjs/loaders": "^7.0.0",
     "@mediapipe/face_mesh": "0.4.1633559619",
     "@mediapipe/pose": "^0.5.1675469404",
     "@mediapipe/selfie_segmentation": "^0.1.1675465747",
