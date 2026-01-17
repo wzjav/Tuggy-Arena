@@ -1,11 +1,15 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useTongueDetection } from '../hooks/useTongueDetection'
-import TongueCounter from './TongueCounter'
+import TugOfWar from './TugOfWar'
+import { AIOpponent } from '../utils/aiOpponent'
 
 /**
- * Main Tongue Game Component
+ * Main Tongue Game Component - Tug of War Edition
  */
 export default function TongueGame() {
+  const [aiScore, setAiScore] = useState(0)
+  const aiOpponentRef = useRef(null)
+
   const {
     videoRef,
     canvasRef,
@@ -24,6 +28,55 @@ export default function TongueGame() {
     rightThreshold: 0.001,
     minHoldFrames: 2
   })
+
+  // Initialize AI opponent
+  useEffect(() => {
+    if (!aiOpponentRef.current) {
+      aiOpponentRef.current = new AIOpponent({
+        basePullInterval: 1500,
+        basePullStrength: 0.5,
+        maxPullMultiplier: 3.0
+      })
+    }
+
+    return () => {
+      if (aiOpponentRef.current) {
+        aiOpponentRef.current.stop()
+      }
+    }
+  }, [])
+
+  // Handle AI score updates
+  const handleAiScoreUpdate = (newScore) => {
+    setAiScore(newScore)
+  }
+
+  // Start AI when detection starts
+  useEffect(() => {
+    if (isActive && isDetecting && aiOpponentRef.current) {
+      // Pass a function that returns current count, so AI can check it dynamically
+      aiOpponentRef.current.start(() => count, handleAiScoreUpdate)
+    } else if (!isActive && aiOpponentRef.current) {
+      aiOpponentRef.current.stop()
+    }
+  }, [isActive, isDetecting, count])
+
+  // Reset game function
+  const handleReset = () => {
+    resetCount()
+    setAiScore(0)
+    if (aiOpponentRef.current) {
+      aiOpponentRef.current.reset()
+    }
+    // Restart AI if game is still active
+    if (isActive && isDetecting) {
+      setTimeout(() => {
+        if (aiOpponentRef.current) {
+          aiOpponentRef.current.start(() => count, handleAiScoreUpdate)
+        }
+      }, 100)
+    }
+  }
 
   // Auto-start detection when component mounts (only once)
   useEffect(() => {
@@ -46,6 +99,9 @@ export default function TongueGame() {
       mounted = false
       clearTimeout(timer)
       stopDetection()
+      if (aiOpponentRef.current) {
+        aiOpponentRef.current.stop()
+      }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -84,8 +140,12 @@ export default function TongueGame() {
         )}
       </div>
 
-      {/* Counter Display */}
-      <TongueCounter count={count} tongueState={tongueState} />
+      {/* Tug of War Display */}
+      <TugOfWar 
+        userScore={count} 
+        aiScore={aiScore} 
+        onReset={handleReset}
+      />
 
       {/* Controls */}
       <div className="flex gap-4">
@@ -101,10 +161,10 @@ export default function TongueGame() {
         </button>
         
         <button
-          onClick={resetCount}
+          onClick={handleReset}
           className="px-6 py-3 rounded-lg font-semibold bg-gray-600 hover:bg-gray-700 text-white transition-colors"
         >
-          Reset Count
+          Reset Game
         </button>
       </div>
 
@@ -114,8 +174,9 @@ export default function TongueGame() {
         <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
           <li>Position your face in front of the camera</li>
           <li>Open your mouth so your tongue is visible</li>
-          <li>Move your tongue left and right</li>
-          <li>Each left→right or right→left movement counts as 1</li>
+          <li>Move your tongue left and right to pull the rope</li>
+          <li>Pull the rope to your side (left) to win!</li>
+          <li>The AI opponent will pull back - the harder you pull, the harder it pulls!</li>
         </ul>
       </div>
     </div>
