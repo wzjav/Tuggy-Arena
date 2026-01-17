@@ -142,7 +142,7 @@ export function useTongueDetection(options = {}) {
 
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       try {
-        // Get video dimensions
+        // Get video dimensions (source dimensions for detection)
         const videoWidth = video.videoWidth
         const videoHeight = video.videoHeight
 
@@ -159,11 +159,15 @@ export function useTongueDetection(options = {}) {
         // In a real implementation, you'd handle the async callback properly
         
         // Draw video to canvas for processing
+        // Use displayed size (CSS dimensions) not source dimensions to avoid scaling mismatch
         if (canvas) {
+          const rect = video.getBoundingClientRect()
+          canvas.width = rect.width
+          canvas.height = rect.height
+          
           const ctx = canvas.getContext('2d')
-          canvas.width = videoWidth
-          canvas.height = videoHeight
-          ctx.drawImage(video, 0, 0, videoWidth, videoHeight)
+          // Draw video to match displayed size
+          ctx.drawImage(video, 0, 0, rect.width, rect.height)
         }
 
         // Continue processing loop
