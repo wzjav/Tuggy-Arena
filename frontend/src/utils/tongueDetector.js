@@ -23,9 +23,7 @@ export class TongueDetector {
         // Dynamically import TensorFlow.js only if needed
         this.tf = await import('@tensorflow/tfjs')
         // TODO: Load TF.js tongue segmentation model
-        console.warn('Model-based detection not yet implemented, using landmark heuristics')
       } catch (err) {
-        console.warn('TensorFlow.js not available, falling back to landmark heuristics:', err)
         this.useModel = false
       }
     }
@@ -168,9 +166,7 @@ export class TongueDetector {
     try {
       this.model = await tf.loadLayersModel(modelPath)
       this.useModel = true
-      console.log('Tongue detection model loaded')
     } catch (error) {
-      console.error('Failed to load tongue detection model:', error)
       throw error
     }
   }

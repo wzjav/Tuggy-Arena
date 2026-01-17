@@ -27,11 +27,11 @@ export default function TongueCounter({ count, tongueState }) {
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+    <div className="bg-black bg-opacity-70 rounded-lg p-4 shadow-lg backdrop-blur-sm">
       <div className="text-center">
-        <div className="text-sm text-gray-400 mb-2">Tongue Movements</div>
-        <div className="text-6xl font-bold text-white mb-4">{count}</div>
-        <div className={`text-lg font-semibold ${getStateColor()}`}>
+        <div className="text-xs text-gray-400 mb-1">Tongue Movements</div>
+        <div className="text-4xl font-bold text-white mb-2">{count}</div>
+        <div className={`text-sm font-semibold ${getStateColor()}`}>
           {getStateLabel()}
         </div>
       </div>

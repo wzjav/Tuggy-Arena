@@ -73,11 +73,6 @@ export function useTongueDetection(options = {}) {
           
           setCount(counterResult.count)
           setTongueState(counterResult.state)
-          
-          // Debug logging (can be removed later)
-          if (counterResult.transition) {
-            console.log('Movement detected:', counterResult.transition, 'Count:', counterResult.count)
-          }
         } else {
           // Update counter with tongue not out (resets to center)
           const counterResult = movementCounterRef.current.update(
@@ -87,8 +82,8 @@ export function useTongueDetection(options = {}) {
           setTongueState(counterResult.state)
         }
       })
-      .catch(err => {
-        console.error('Tongue detection error:', err)
+      .catch(() => {
+        // Error handled silently
       })
   }, [])
 
@@ -124,7 +119,6 @@ export function useTongueDetection(options = {}) {
 
       setError(null)
     } catch (err) {
-      console.error('Failed to initialize detection:', err)
       setError(err.message)
     }
   }, [options, handleFaceResults])
@@ -151,8 +145,16 @@ export function useTongueDetection(options = {}) {
           return
         }
 
+        // Check if FaceDetector is actually initialized before processing
+        const faceDetector = faceDetectorRef.current
+        if (!faceDetector || !faceDetector.isInitialized || !faceDetector.faceMesh) {
+          // Wait a bit and try again
+          animationFrameRef.current = requestAnimationFrame(processFrame)
+          return
+        }
+
         // Process frame with face detection
-        await faceDetectorRef.current.send(video)
+        await faceDetector.send(video)
 
         // Note: Face detection results come via callback
         // For now, we'll process synchronously
@@ -173,7 +175,7 @@ export function useTongueDetection(options = {}) {
         // Continue processing loop
         animationFrameRef.current = requestAnimationFrame(processFrame)
       } catch (err) {
-        console.error('Frame processing error:', err)
+        // Continue processing loop on error
         animationFrameRef.current = requestAnimationFrame(processFrame)
       }
     } else {
@@ -202,6 +204,8 @@ export function useTongueDetection(options = {}) {
       // Initialize if not already done
       if (!faceDetectorRef.current) {
         await initialize()
+        // Give MediaPipe a moment to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
 
       // Get user media
@@ -242,9 +246,6 @@ export function useTongueDetection(options = {}) {
         await video.play()
       } catch (playErr) {
         // Ignore AbortError - it means play was interrupted, which is fine
-        if (playErr.name !== 'AbortError') {
-          console.warn('Video play error:', playErr)
-        }
       }
 
       isActiveRef.current = true
@@ -255,7 +256,6 @@ export function useTongueDetection(options = {}) {
       // Start processing loop
       processFrame()
     } catch (err) {
-      console.error('Failed to start detection:', err)
       isActiveRef.current = false
       setError(err.message)
       setIsActive(false)
