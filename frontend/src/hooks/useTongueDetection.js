@@ -13,6 +13,7 @@ export function useTongueDetection(options = {}) {
   const [tongueState, setTongueState] = useState('CENTER')
   const [isDetecting, setIsDetecting] = useState(false)
   const [error, setError] = useState(null)
+  const pausedRef = useRef(options.paused || false)
 
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
@@ -23,6 +24,11 @@ export function useTongueDetection(options = {}) {
   const tongueDetectorRef = useRef(null)
   const tongueTrackerRef = useRef(null)
   const movementCounterRef = useRef(null)
+
+  // Update paused state when options change
+  useEffect(() => {
+    pausedRef.current = options.paused || false
+  }, [options.paused])
 
   /**
    * Handle face detection results
@@ -65,26 +71,42 @@ export function useTongueDetection(options = {}) {
         const trackedPosition = tongueTrackerRef.current.update(detection)
 
         if (trackedPosition && trackedPosition.isVisible && detection.tongueOut) {
-          // Update counter - only count when tongue is out
-          const counterResult = movementCounterRef.current.update(
-            trackedPosition.relativeX,
-            detection.tongueOut
-          )
-          
-          setCount(counterResult.count)
-          setTongueState(counterResult.state)
-          
-          // Debug logging (can be removed later)
-          if (counterResult.transition) {
-            console.log('Movement detected:', counterResult.transition, 'Count:', counterResult.count)
+          // Update counter - only count when tongue is out and not paused
+          if (!pausedRef.current) {
+            const counterResult = movementCounterRef.current.update(
+              trackedPosition.relativeX,
+              detection.tongueOut
+            )
+            
+            setCount(counterResult.count)
+            setTongueState(counterResult.state)
+            
+            // Debug logging (can be removed later)
+            if (counterResult.transition) {
+              console.log('Movement detected:', counterResult.transition, 'Count:', counterResult.count)
+            }
+          } else {
+            // Game is paused, just update state without counting
+            const currentState = movementCounterRef.current.classifyPosition(trackedPosition.relativeX)
+            setTongueState(currentState)
           }
         } else {
           // Update counter with tongue not out (resets to center)
-          const counterResult = movementCounterRef.current.update(
-            trackedPosition?.relativeX || null,
-            false
-          )
-          setTongueState(counterResult.state)
+          if (!pausedRef.current) {
+            const counterResult = movementCounterRef.current.update(
+              trackedPosition?.relativeX || null,
+              false
+            )
+            setTongueState(counterResult.state)
+          } else {
+            // Game is paused, just update state
+            if (trackedPosition?.relativeX !== null && trackedPosition?.relativeX !== undefined) {
+              const currentState = movementCounterRef.current.classifyPosition(trackedPosition.relativeX)
+              setTongueState(currentState)
+            } else {
+              setTongueState('CENTER')
+            }
+          }
         }
       })
       .catch(err => {

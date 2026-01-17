@@ -1,13 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Tug of War Game Component
  * Displays two characters pulling a rope, with position based on score difference
  */
-export default function TugOfWar({ userScore, aiScore, onReset }) {
+export default function TugOfWar({ userScore, aiScore, gameOver, onReset }) {
   const ropeRef = useRef(null)
   const userCharRef = useRef(null)
   const aiCharRef = useRef(null)
+  const frozenRopePositionRef = useRef(null) // Store rope position when game ends
+  const [winner, setWinner] = useState(null) // 'user' or 'ai' or null
 
   // Calculate rope position (0-100%, where 50% is center)
   // Win threshold: 10% (user wins) or 90% (AI wins)
@@ -25,9 +27,50 @@ export default function TugOfWar({ userScore, aiScore, onReset }) {
     return Math.max(10, Math.min(90, position))
   }
 
-  const ropePosition = calculateRopePosition()
-  const userWins = ropePosition <= 10
-  const aiWins = ropePosition >= 90
+  // Calculate current rope position
+  const currentRopePosition = calculateRopePosition()
+
+  // Freeze rope position and determine winner when game ends
+  useEffect(() => {
+    if (gameOver && frozenRopePositionRef.current === null) {
+      // Freeze the rope position when game ends
+      frozenRopePositionRef.current = currentRopePosition
+      
+      // Determine winner immediately based on frozen position
+      const frozenPos = frozenRopePositionRef.current
+      if (frozenPos <= 10) {
+        setWinner('user')
+      } else if (frozenPos >= 90) {
+        setWinner('ai')
+      } else {
+        // Fallback: determine from score difference if position is exactly at threshold
+        const scoreDifference = userScore - aiScore
+        if (scoreDifference > 0) {
+          setWinner('user')
+        } else {
+          setWinner('ai')
+        }
+      }
+    } else if (!gameOver) {
+      // Reset frozen position and winner when game restarts
+      frozenRopePositionRef.current = null
+      setWinner(null)
+    }
+  }, [gameOver, currentRopePosition, userScore, aiScore])
+
+  // Use frozen position if game is over, otherwise calculate dynamically
+  const ropePosition = gameOver && frozenRopePositionRef.current !== null
+    ? frozenRopePositionRef.current
+    : currentRopePosition
+  
+  // Determine winner: use stored winner if available, otherwise calculate from rope position
+  // When gameOver is true, we should always have a winner (either stored or from current position)
+  const userWins = gameOver
+    ? (winner === 'user' || (winner === null && ropePosition <= 10))
+    : ropePosition <= 10
+  const aiWins = gameOver
+    ? (winner === 'ai' || (winner === null && ropePosition >= 90))
+    : ropePosition >= 90
 
   // Animate rope position smoothly
   useEffect(() => {
@@ -160,7 +203,7 @@ export default function TugOfWar({ userScore, aiScore, onReset }) {
         </div>
 
         {/* Win/Lose Overlay */}
-        {(userWins || aiWins) && (
+        {gameOver && (winner !== null || ropePosition <= 10 || ropePosition >= 90) && (
           <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-30 rounded-lg">
             <div className="text-center">
               <div className={`text-6xl mb-4 ${userWins ? 'text-green-400' : 'text-red-400'}`}>

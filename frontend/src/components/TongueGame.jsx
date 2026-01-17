@@ -8,6 +8,7 @@ import { AIOpponent } from '../utils/aiOpponent'
  */
 export default function TongueGame() {
   const [aiScore, setAiScore] = useState(0)
+  const [gameOver, setGameOver] = useState(false)
   const aiOpponentRef = useRef(null)
 
   const {
@@ -26,7 +27,8 @@ export default function TongueGame() {
     minConfidence: 0.4, // Higher confidence required (tongue must be clearly out)
     leftThreshold: -0.001, // Much more sensitive - small head movements count
     rightThreshold: 0.001,
-    minHoldFrames: 2
+    minHoldFrames: 2,
+    paused: gameOver // Pause counting when game is over
   })
 
   // Initialize AI opponent
@@ -46,25 +48,50 @@ export default function TongueGame() {
     }
   }, [])
 
+  
+  // Game ends when rope crosses 10% (user wins) or 90% (AI wins)
+  // Once gameOver is true, it stays true until explicitly reset
+  useEffect(() => {
+    // Don't check for game over if game is already over
+    if (gameOver) return
+    
+    const scoreDifference = count - aiScore
+    const maxScoreDifference = 20
+    const ropePosition = 50 - (scoreDifference / maxScoreDifference) * 40
+    const isGameOver = ropePosition <= 10 || ropePosition >= 90
+    
+    if (isGameOver) {
+      setGameOver(true)
+      // Stop AI opponent
+      if (aiOpponentRef.current) {
+        aiOpponentRef.current.stop()
+      }
+    }
+  }, [count, aiScore, gameOver])
+
   // Handle AI score updates
   const handleAiScoreUpdate = (newScore) => {
-    setAiScore(newScore)
+    // Don't update AI score if game is over
+    if (!gameOver) {
+      setAiScore(newScore)
+    }
   }
 
-  // Start AI when detection starts
+  // Start AI when detection starts (but not if game is over)
   useEffect(() => {
-    if (isActive && isDetecting && aiOpponentRef.current) {
+    if (isActive && isDetecting && aiOpponentRef.current && !gameOver) {
       // Pass a function that returns current count, so AI can check it dynamically
       aiOpponentRef.current.start(() => count, handleAiScoreUpdate)
-    } else if (!isActive && aiOpponentRef.current) {
+    } else if ((!isActive || gameOver) && aiOpponentRef.current) {
       aiOpponentRef.current.stop()
     }
-  }, [isActive, isDetecting, count])
+  }, [isActive, isDetecting, count, gameOver])
 
   // Reset game function
   const handleReset = () => {
     resetCount()
     setAiScore(0)
+    setGameOver(false)
     if (aiOpponentRef.current) {
       aiOpponentRef.current.reset()
     }
@@ -144,6 +171,7 @@ export default function TongueGame() {
       <TugOfWar 
         userScore={count} 
         aiScore={aiScore} 
+        gameOver={gameOver}
         onReset={handleReset}
       />
 
