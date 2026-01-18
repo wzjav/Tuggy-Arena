@@ -248,9 +248,11 @@ export function useDualTongueDetection(options = {}) {
       })
       player1MovementCounterRef.current = player1Counter
 
+      // Player 2 (right side of camera) needs more sensitive thresholds
+      // Especially rightThreshold to detect RIGHT movements more easily
       const player2Counter = new MovementCounter({
-        leftThreshold: options.leftThreshold !== undefined ? options.leftThreshold : -0.0003,
-        rightThreshold: options.rightThreshold !== undefined ? options.rightThreshold : 0.0003,
+        leftThreshold: options.player2LeftThreshold !== undefined ? options.player2LeftThreshold : -0.0001,
+        rightThreshold: options.player2RightThreshold !== undefined ? options.player2RightThreshold : 0.0001,
         minHoldFrames: options.minHoldFrames !== undefined ? options.minHoldFrames : 1
       })
       player2MovementCounterRef.current = player2Counter

@@ -247,14 +247,14 @@ export default function TongueGame() {
 
         <div className="relative max-w-4xl mx-auto px-8 py-16 flex flex-col items-center">
           <div className="w-full max-w-2xl text-center mb-12">
-            <p className="text-[12px] tracking-[0.34em] uppercase mb-3" style={{ color: '#FFD700' }}>Motion Arena</p>
-            <h1 className="text-5xl md:text-6xl font-semibold leading-tight mb-12 text-white">Tongue Tug Arena</h1>
+            <p className="text-[12px] tracking-[0.34em] uppercase mb-3" style={{ color: '#FFD700' }}>Do you have the freak??</p>
+            <h1 className="text-5xl md:text-6xl font-semibold leading-tight mb-12 text-white">Tuggy Arena &#128539;</h1>
           </div>
 
           <div className="w-full max-w-xl flex flex-col gap-4">
             <button
               onClick={() => handleModeSelect('ai')}
-              className="group rounded-3xl border p-8 text-left transition-all shadow-2xl flex flex-col gap-3 transform hover:scale-[1.02]"
+              className="cursor-pointer group rounded-3xl border p-8 text-left transition-all shadow-2xl flex flex-col gap-3 transform hover:scale-[1.02]"
               style={{ 
                 backgroundColor: '#35679B', 
                 border: 'none',
@@ -279,7 +279,7 @@ export default function TongueGame() {
 
             <button
               onClick={() => handleModeSelect('human')}
-              className="group rounded-3xl border p-8 text-left transition-all shadow-2xl flex flex-col gap-3 transform hover:scale-[1.02]"
+              className="group rounded-3xl border p-8 text-left transition-all shadow-2xl flex flex-col gap-3 transform hover:scale-[1.02] cursor-pointer"
               style={{ 
                 backgroundColor: '#35679B', 
                 border: 'none',
