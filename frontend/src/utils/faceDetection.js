@@ -24,7 +24,7 @@ export class FaceDetector {
     })
 
     this.faceMesh.setOptions({
-      maxNumFaces: 1,
+      maxNumFaces: 2, // Support up to 2 faces for multiplayer mode
       refineLandmarks: true,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5

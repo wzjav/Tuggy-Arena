@@ -49,7 +49,14 @@ function createCharacter(scene, color, name) {
  * 3D Tug of War Game Component using Babylon.js
  * Displays two stylized 3D characters pulling a rope, with position based on score difference
  */
-export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
+export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai', gameOver, onReset }) {
+  // For backward compatibility, support old prop names
+  const userScore = player1Score ?? 0
+  const aiScore = player2Score ?? 0
+  
+  // Determine player labels based on game mode
+  const player1Label = gameMode === 'ai' ? 'You' : 'Player 1'
+  const player2Label = gameMode === 'ai' ? 'AI' : 'Player 2'
   const canvasRef = useRef(null)
   const engineRef = useRef(null)
   const sceneRef = useRef(null)
@@ -61,15 +68,15 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
   const frozenRopePositionRef = useRef(null)
 
   // Calculate rope position (0-100%, where 50% is center)
-  // Win threshold: 10% (user wins) or 90% (AI wins)
-  // User is on LEFT (lower %), AI is on RIGHT (higher %)
+  // Win threshold: 10% (player 1 wins) or 90% (player 2 wins)
+  // Player 1 is on LEFT (lower %), Player 2 is on RIGHT (higher %)
   const calculateRopePosition = () => {
     const scoreDifference = userScore - aiScore
     const maxScoreDifference = 20 // Maximum expected score difference for full rope movement
     
     // Center at 50%, move ±40% based on score difference
-    // When userScore > aiScore (positive difference), rope moves LEFT (lower %)
-    // When userScore < aiScore (negative difference), rope moves RIGHT (higher %)
+    // When player1Score > player2Score (positive difference), rope moves LEFT (lower %)
+    // When player1Score < player2Score (negative difference), rope moves RIGHT (higher %)
     const position = 50 - (scoreDifference / maxScoreDifference) * 40
     
     // Clamp between 10% and 90% (win thresholds)
@@ -86,15 +93,15 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
       
       const frozenPos = frozenRopePositionRef.current
       if (frozenPos <= 10) {
-        setWinner('user')
+        setWinner('player1')
       } else if (frozenPos >= 90) {
-        setWinner('ai')
+        setWinner('player2')
       } else {
         const scoreDifference = userScore - aiScore
         if (scoreDifference > 0) {
-          setWinner('user')
+          setWinner('player1')
         } else {
-          setWinner('ai')
+          setWinner('player2')
         }
       }
     } else if (!gameOver) {
@@ -253,11 +260,11 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
     }
   }, [ropePosition, updateRopePosition])
 
-  const userWins = gameOver
-    ? (winner === 'user' || (winner === null && ropePosition <= 10))
+  const player1Wins = gameOver
+    ? (winner === 'player1' || (winner === null && ropePosition <= 10))
     : ropePosition <= 10
-  const aiWins = gameOver
-    ? (winner === 'ai' || (winner === null && ropePosition >= 90))
+  const player2Wins = gameOver
+    ? (winner === 'player2' || (winner === null && ropePosition >= 90))
     : ropePosition >= 90
 
   return (
@@ -265,7 +272,7 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
       {/* Score Display - Overlay at Top Center */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 flex gap-8 items-center">
         <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
-          <div className="text-xs text-gray-400 mb-1">You</div>
+          <div className="text-xs text-gray-400 mb-1">{player1Label}</div>
           <div className="text-4xl font-bold text-blue-400">{Math.floor(userScore)}</div>
         </div>
         <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
@@ -273,7 +280,7 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
           <div className="text-lg text-gray-300 font-semibold">3D Tug of War</div>
         </div>
         <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
-          <div className="text-xs text-gray-400 mb-1">AI</div>
+          <div className="text-xs text-gray-400 mb-1">{player2Label}</div>
           <div className="text-4xl font-bold text-red-400">{Math.floor(aiScore)}</div>
         </div>
       </div>
@@ -290,14 +297,18 @@ export default function TugOfWar3D({ userScore, aiScore, gameOver, onReset }) {
         {gameOver && (winner !== null || ropePosition <= 10 || ropePosition >= 90) && (
           <div className="absolute inset-0 bg-black bg-opacity-85 flex items-center justify-center z-30">
             <div className="text-center">
-              <div className={`text-8xl mb-6 ${userWins ? 'text-green-400' : 'text-red-400'}`}>
-                {userWins ? '🎉' : '😢'}
+              <div className={`text-8xl mb-6 ${player1Wins ? 'text-green-400' : 'text-red-400'}`}>
+                {player1Wins ? '🎉' : '😢'}
               </div>
-              <div className={`text-6xl font-bold mb-6 ${userWins ? 'text-green-400' : 'text-red-400'}`}>
-                {userWins ? 'YOU WIN!' : 'AI WINS!'}
+              <div className={`text-6xl font-bold mb-6 ${player1Wins ? 'text-green-400' : 'text-red-400'}`}>
+                {player1Wins 
+                  ? `${player1Label.toUpperCase()} WINS!` 
+                  : `${player2Label.toUpperCase()} WINS!`}
               </div>
               <div className="text-2xl text-gray-300 mb-8">
-                {userWins ? 'Great job pulling!' : 'Better luck next time!'}
+                {player1Wins 
+                  ? (gameMode === 'ai' ? 'Great job pulling!' : 'Player 1 wins!')
+                  : (gameMode === 'ai' ? 'Better luck next time!' : 'Player 2 wins!')}
               </div>
               {onReset && (
                 <button
