@@ -135,19 +135,8 @@ export default function TongueGame() {
         setAiScore(aiOpponentRef.current.getScore())
       }
 
-      // Check win conditions (use live counts for win detection)
-      const scoreDifference = gameMode === 'ai' 
-        ? player1Count - aiOpponentRef.current.getScore()
-        : dualPlayer1Count - dualPlayer2Count
-      
-      const maxScoreDifference = 20
-      const ropePosition = 50 - (scoreDifference / maxScoreDifference) * 40
-      const clampedPosition = Math.max(10, Math.min(90, ropePosition))
-
-      if (clampedPosition <= 10 || clampedPosition >= 90) {
-        setGameOver(true)
-        return
-      }
+      // Win condition is now checked in TugOfWar3D based on rope knot position
+      // No need to check here - TugOfWar3D will call onWinnerChange callback
 
       gameLoopRef.current = requestAnimationFrame(gameLoop)
     }
@@ -342,6 +331,11 @@ export default function TongueGame() {
           gameMode={gameMode}
           gameOver={gameOver}
           onReset={handleReset}
+          onWinnerChange={(winner) => {
+            if (!gameOver) {
+              setGameOver(true)
+            }
+          }}
         />
       </div>
 

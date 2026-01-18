@@ -49,7 +49,7 @@ function createCharacter(scene, color, name) {
  * 3D Tug of War Game Component using Babylon.js
  * Displays two stylized 3D characters pulling a rope, with position based on score difference
  */
-export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai', gameOver, onReset }) {
+export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai', gameOver, onReset, onWinnerChange }) {
   // For backward compatibility, support old prop names
   const userScore = player1Score ?? 0
   const aiScore = player2Score ?? 0
@@ -68,7 +68,7 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
   const frozenRopePositionRef = useRef(null)
 
   // Calculate rope position (0-100%, where 50% is center)
-  // Win threshold: 10% (player 1 wins) or 90% (player 2 wins)
+  // Win condition: when knot passes character's line (not clamped)
   // Player 1 is on LEFT (lower %), Player 2 is on RIGHT (higher %)
   const calculateRopePosition = () => {
     const scoreDifference = userScore - aiScore
@@ -79,36 +79,22 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     // When player1Score < player2Score (negative difference), rope moves RIGHT (higher %)
     const position = 50 - (scoreDifference / maxScoreDifference) * 40
     
-    // Clamp between 10% and 90% (win thresholds)
-    return Math.max(10, Math.min(90, position))
+    // Don't clamp - allow rope to move past character lines for win detection
+    return position
   }
 
   // Calculate current rope position
   const currentRopePosition = calculateRopePosition()
 
-  // Freeze rope position and determine winner when game ends
+  // Freeze rope position when game ends
   useEffect(() => {
     if (gameOver && frozenRopePositionRef.current === null) {
       frozenRopePositionRef.current = currentRopePosition
-      
-      const frozenPos = frozenRopePositionRef.current
-      if (frozenPos <= 10) {
-        setWinner('player1')
-      } else if (frozenPos >= 90) {
-        setWinner('player2')
-      } else {
-        const scoreDifference = userScore - aiScore
-        if (scoreDifference > 0) {
-          setWinner('player1')
-        } else {
-          setWinner('player2')
-        }
-      }
     } else if (!gameOver) {
       frozenRopePositionRef.current = null
       setWinner(null)
     }
-  }, [gameOver, currentRopePosition, userScore, aiScore])
+  }, [gameOver, currentRopePosition])
 
   // Use frozen position if game is over, otherwise calculate dynamically
   const ropePosition = gameOver && frozenRopePositionRef.current !== null
@@ -193,9 +179,12 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     aiCharRef.current = aiChar
 
     // Create rope
-    const ropeLength = 20
+    // Initial distance between characters is 24 (-12 to 12)
+    // Rope base height is 20, so initial scale should be 24/20 = 1.2
+    const ropeBaseHeight = 20
+    const initialRopeLength = 24 // Distance from -12 to 12
     const rope = MeshBuilder.CreateCylinder('rope', {
-      height: ropeLength,
+      height: ropeBaseHeight,
       diameter: 0.3
     }, scene)
     const ropeMaterial = new StandardMaterial('ropeMat', scene)
@@ -203,6 +192,8 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     rope.material = ropeMaterial
     rope.rotation.z = Math.PI / 2 // Rotate to horizontal
     rope.position.y = 1.5
+    // Set initial scale to match initial distance between characters
+    rope.scaling.y = initialRopeLength / ropeBaseHeight // 24/20 = 1.2
     ropeRef.current = rope
 
     // Create rope knot/center marker
@@ -233,25 +224,101 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
 
   // Update rope position smoothly
   const updateRopePosition = useCallback((position) => {
-    if (!ropeRef.current || !ropeKnotRef.current) return
+    if (!ropeRef.current || !ropeKnotRef.current || !userCharRef.current || !aiCharRef.current) return
 
     // Convert percentage (0-100) to world position (-15 to 15)
     // 0% = -15 (far left), 50% = 0 (center), 100% = 15 (far right)
     const worldX = (position / 100) * 30 - 15
 
-    // Update rope position (rope extends from knot position)
-    ropeRef.current.position.x = worldX
-    ropeKnotRef.current.position.x = worldX
-
-    // Update character positions based on rope
-    if (userCharRef.current && aiCharRef.current) {
-      const userOffset = (50 - position) * 0.15 // Move left when winning
-      const aiOffset = (position - 50) * 0.15 // Move right when winning
+    // Base positions (starting lines - characters never move behind these)
+    const baseUserX = -12  // Player 1 base line
+    const baseAiX = 12     // Player 2 base line
+    const initialRopeLength = 24 // Distance from -12 to 12
+    
+    let userCharX, aiCharX
+    let currentRopeLength
+    
+    // Characters can only move forward (toward center), never backward past their base line
+    // Winning player stays at their base line
+    // Losing player gets pulled toward center, shortening the rope
+    
+    if (position < 50) {
+      // Player 1 is winning (has more count) - pulling player 2 in
+      // Player 1 stays at base line
+      userCharX = baseUserX
       
-      userCharRef.current.position.x = -12 + userOffset
-      aiCharRef.current.position.x = 12 + aiOffset
+      // Calculate how far player 2 should be pulled in based on score difference
+      // When position = 50 (tied), player 2 is at baseAiX (12)
+      // When position = 0 (player 1 winning by a lot), player 2 is pulled all the way to center
+      const pullRatio = (50 - position) / 50 // 0 when tied, 1 when player 1 winning by max
+      const maxPullDistance = 12 // Maximum pull (from 12 to 0)
+      const pullDistance = pullRatio * maxPullDistance
+      aiCharX = Math.max(0, baseAiX - pullDistance) // Never go past center (0)
+      
+      // Rope length = distance between characters
+      currentRopeLength = Math.abs(aiCharX - userCharX)
+    } else if (position > 50) {
+      // Player 2 is winning (has more count) - pulling player 1 in
+      // Player 2 stays at base line
+      aiCharX = baseAiX
+      
+      // Calculate how far player 1 should be pulled in
+      const pullRatio = (position - 50) / 50 // 0 when tied, 1 when player 2 winning by max
+      const maxPullDistance = 12 // Maximum pull (from -12 to 0)
+      const pullDistance = pullRatio * maxPullDistance
+      userCharX = Math.min(0, baseUserX + pullDistance) // Never go past center (0)
+      
+      // Rope length = distance between characters
+      currentRopeLength = Math.abs(aiCharX - userCharX)
+    } else {
+      // Tied (position = 50) - both at base lines, rope at full length
+      userCharX = baseUserX
+      aiCharX = baseAiX
+      currentRopeLength = initialRopeLength
     }
-  }, [])
+    
+    // Ensure characters never move behind their base lines (safety check)
+    userCharX = Math.max(baseUserX, userCharX) // Player 1 can't go left of -12
+    aiCharX = Math.min(baseAiX, aiCharX) // Player 2 can't go right of 12
+    
+    // Recalculate rope length after ensuring character positions are valid
+    currentRopeLength = Math.abs(aiCharX - userCharX)
+    
+    // Set character positions
+    userCharRef.current.position.x = userCharX
+    aiCharRef.current.position.x = aiCharX
+
+    // Update rope length - rope only shortens, never extends
+    // Since characters can only move forward (toward center), rope will only shorten
+    const minRopeLength = 4 // Minimum rope length to prevent rope from disappearing
+    const finalRopeLength = Math.max(minRopeLength, currentRopeLength)
+    ropeRef.current.scaling.y = finalRopeLength / 20 // Scale based on original length of 20
+    
+    // Position rope to connect the two characters
+    // The rope center should be at the midpoint between characters
+    const ropeCenterX = (userCharX + aiCharX) / 2
+    ropeRef.current.position.x = ropeCenterX
+    
+    // Update knot position (moves based on score)
+    ropeKnotRef.current.position.x = worldX
+    
+    // Check win conditions: knot passes character's base line
+    if (!gameOver) {
+      if (worldX <= baseUserX && winner !== 'player1') {
+        // Knot passed player 1's line - player 1 wins
+        setWinner('player1')
+        if (onWinnerChange) {
+          onWinnerChange('player1')
+        }
+      } else if (worldX >= baseAiX && winner !== 'player2') {
+        // Knot passed player 2's line - player 2 wins
+        setWinner('player2')
+        if (onWinnerChange) {
+          onWinnerChange('player2')
+        }
+      }
+    }
+  }, [gameOver, winner, onWinnerChange])
 
   // Update rope position when score changes
   useEffect(() => {
@@ -260,12 +327,8 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     }
   }, [ropePosition, updateRopePosition])
 
-  const player1Wins = gameOver
-    ? (winner === 'player1' || (winner === null && ropePosition <= 10))
-    : ropePosition <= 10
-  const player2Wins = gameOver
-    ? (winner === 'player2' || (winner === null && ropePosition >= 90))
-    : ropePosition >= 90
+  const player1Wins = winner === 'player1'
+  const player2Wins = winner === 'player2'
 
   return (
     <div className="relative w-full h-full">
