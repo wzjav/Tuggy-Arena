@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Engine, Scene, ArcRotateCamera, HemisphericLight, DirectionalLight, Vector3, MeshBuilder, StandardMaterial, Color3, Animation } from '@babylonjs/core'
+import { Engine, Scene, ArcRotateCamera, HemisphericLight, DirectionalLight, Vector3, MeshBuilder, StandardMaterial, Color3 } from '@babylonjs/core'
 
 /**
  * Helper function to create a stylized character
@@ -74,7 +74,7 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     const scoreDifference = userScore - aiScore
     const maxScoreDifference = 20 // Maximum expected score difference for full rope movement
     
-    // Center at 50%, move ±40% based on score difference
+    // Center at 50%, move +/-40% based on score difference
     // When player1Score > player2Score (positive difference), rope moves LEFT (lower %)
     // When player1Score < player2Score (negative difference), rope moves RIGHT (higher %)
     const position = 50 - (scoreDifference / maxScoreDifference) * 40
@@ -153,14 +153,14 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     // Create ground plane
     const ground = MeshBuilder.CreateGround('ground', { width: 30, height: 30 }, scene)
     const groundMaterial = new StandardMaterial('groundMat', scene)
-    groundMaterial.diffuseColor = new Color3(0.2, 0.2, 0.2)
+    groundMaterial.diffuseColor = new Color3(0.10, 0.23, 0.35) // Dark Blue #1A3B58 variant
     ground.material = groundMaterial
     ground.position.y = 0
 
     // Create center line marker
     const centerLine = MeshBuilder.CreateBox('centerLine', { width: 0.1, height: 0.5, depth: 30 }, scene)
     const centerLineMaterial = new StandardMaterial('centerLineMat', scene)
-    centerLineMaterial.diffuseColor = new Color3(1, 1, 0) // Yellow
+    centerLineMaterial.diffuseColor = new Color3(1, 0.84, 0) // #FFD700 Bright Yellow
     centerLine.material = centerLineMaterial
     centerLine.position.x = 0
     centerLine.position.y = 0.25
@@ -168,26 +168,26 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     // Create win threshold markers
     const userWinMarker = MeshBuilder.CreateBox('userWinMarker', { width: 0.1, height: 0.5, depth: 30 }, scene)
     const userWinMaterial = new StandardMaterial('userWinMat', scene)
-    userWinMaterial.diffuseColor = new Color3(0, 1, 0) // Green
+    userWinMaterial.diffuseColor = new Color3(0.21, 0.40, 0.61) // #35679B Medium Blue
     userWinMarker.material = userWinMaterial
     userWinMarker.position.x = -9 // 10% of 30 units = -9 (left side)
     userWinMarker.position.y = 0.25
 
     const aiWinMarker = MeshBuilder.CreateBox('aiWinMarker', { width: 0.1, height: 0.5, depth: 30 }, scene)
     const aiWinMaterial = new StandardMaterial('aiWinMat', scene)
-    aiWinMaterial.diffuseColor = new Color3(1, 0, 0) // Red
+    aiWinMaterial.diffuseColor = new Color3(0.95, 0.95, 0.96) // #F1F2F6 Off-White
     aiWinMarker.material = aiWinMaterial
     aiWinMarker.position.x = 9 // 90% of 30 units = 9 (right side)
     aiWinMarker.position.y = 0.25
 
-    // Create user character (left side, blue)
-    const userChar = createCharacter(scene, new Color3(0.2, 0.5, 1), 'user')
+    // Create user character (left side, medium blue)
+    const userChar = createCharacter(scene, new Color3(0.21, 0.40, 0.61), 'user') // #35679B
     userChar.position.x = -12
     userChar.position.y = 2
     userCharRef.current = userChar
 
-    // Create AI character (right side, red)
-    const aiChar = createCharacter(scene, new Color3(1, 0.2, 0.2), 'ai')
+    // Create AI character (right side, off-white)
+    const aiChar = createCharacter(scene, new Color3(0.95, 0.95, 0.96), 'ai') // #F1F2F6
     aiChar.position.x = 12
     aiChar.position.y = 2
     aiCharRef.current = aiChar
@@ -208,7 +208,7 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     // Create rope knot/center marker
     const ropeKnot = MeshBuilder.CreateSphere('ropeKnot', { diameter: 0.8 }, scene)
     const knotMaterial = new StandardMaterial('knotMat', scene)
-    knotMaterial.diffuseColor = new Color3(0.8, 0.6, 0.2) // Gold/yellow
+    knotMaterial.diffuseColor = new Color3(1, 0.84, 0) // #FFD700 Bright Yellow
     ropeKnot.material = knotMaterial
     ropeKnot.position.y = 1.5
     ropeKnotRef.current = ropeKnot
@@ -268,20 +268,33 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
     : ropePosition >= 90
 
   return (
-    <div className="relative w-full h-full bg-gray-900">
+    <div className="relative w-full h-full">
       {/* Score Display - Overlay at Top Center */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 flex gap-8 items-center">
-        <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
-          <div className="text-xs text-gray-400 mb-1">{player1Label}</div>
-          <div className="text-4xl font-bold text-blue-400">{Math.floor(userScore)}</div>
-        </div>
-        <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
-          <div className="text-xs text-gray-400 mb-1">VS</div>
-          <div className="text-lg text-gray-300 font-semibold">3D Tug of War</div>
-        </div>
-        <div className="text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg">
-          <div className="text-xs text-gray-400 mb-1">{player2Label}</div>
-          <div className="text-4xl font-bold text-red-400">{Math.floor(aiScore)}</div>
+      <div className="absolute top-5 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="rounded-2xl border px-6 py-4 flex items-center gap-6 shadow-2xl" style={{ backgroundColor: '#2D3540'}}>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-semibold" style={{ backgroundColor: '#35679B', border: 'none', outline: 'none' }}>
+              {player1Label.slice(0, 1)}
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.26em] text-white opacity-80">{player1Label}</div>
+              <div className="text-3xl font-bold text-white">{Math.floor(userScore)}</div>
+            </div>
+          </div>
+
+          <div className="px-4 py-2 rounded-xl text-xs uppercase tracking-[0.2em]" style={{ backgroundColor: '#FFD700', color: '#1A3B58', border: 'none' }}>
+            Rope balance
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center font-semibold" style={{ backgroundColor: '#F1F2F6', border: 'none', outline: 'none', color: '#2D3540' }}>
+              {player2Label.slice(0, 1)}
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.26em] text-white opacity-80">{player2Label}</div>
+              <div className="text-3xl font-bold text-white">{Math.floor(aiScore)}</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -295,27 +308,39 @@ export default function TugOfWar3D({ player1Score, player2Score, gameMode = 'ai'
 
         {/* Win/Lose Overlay */}
         {gameOver && (winner !== null || ropePosition <= 10 || ropePosition >= 90) && (
-          <div className="absolute inset-0 bg-black bg-opacity-85 flex items-center justify-center z-30">
-            <div className="text-center">
-              <div className={`text-8xl mb-6 ${player1Wins ? 'text-green-400' : 'text-red-400'}`}>
-                {player1Wins ? '🎉' : '😢'}
+          <div className="absolute inset-0 flex items-center justify-center z-30" style={{ backgroundColor: 'rgba(26, 59, 88, 0.9)' }}>
+            <div className="text-center space-y-4 max-w-lg px-4">
+              <div className="text-6xl font-bold text-white">
+                {player1Wins
+                  ? (player1Label === 'You' ? 'You win!' : `${player1Label} wins!`)
+                  : `${player2Label} wins!`}
               </div>
-              <div className={`text-6xl font-bold mb-6 ${player1Wins ? 'text-green-400' : 'text-red-400'}`}>
+              <div className="text-lg text-white opacity-90">
                 {player1Wins 
-                  ? `${player1Label.toUpperCase()} WINS!` 
-                  : `${player2Label.toUpperCase()} WINS!`}
+                  ? (gameMode === 'ai' ? 'You pulled past the finish line.' : 'Player 1 held the lead to the end.')
+                  : (gameMode === 'ai' ? 'AI dragged the rope across the threshold.' : 'Player 2 took the final pull.')}
               </div>
-              <div className="text-2xl text-gray-300 mb-8">
-                {player1Wins 
-                  ? (gameMode === 'ai' ? 'Great job pulling!' : 'Player 1 wins!')
-                  : (gameMode === 'ai' ? 'Better luck next time!' : 'Player 2 wins!')}
+              <div className="flex items-center justify-center gap-4 text-sm text-white">
+                <span className="px-3 py-2 rounded-lg text-white" style={{ backgroundColor: '#35679B', border: '2px solid #FFD700' }}>
+                  {player1Label}: {Math.floor(userScore)}
+                </span>
+                <span className="px-3 py-2 rounded-lg" style={{ backgroundColor: '#F1F2F6', border: '2px solid #FFD700', color: '#2D3540' }}>
+                  {player2Label}: {Math.floor(aiScore)}
+                </span>
               </div>
               {onReset && (
                 <button
                   onClick={onReset}
-                  className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-xl shadow-lg"
+                  className="px-8 py-4 font-semibold rounded-xl transition-colors text-lg shadow-lg border"
+                  style={{ backgroundColor: '#FFD700', border: '2px solid #FFD700', outline: 'none', color: '#1A3B58' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FFE500'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FFD700'
+                  }}
                 >
-                  Play Again
+                  Play again
                 </button>
               )}
             </div>

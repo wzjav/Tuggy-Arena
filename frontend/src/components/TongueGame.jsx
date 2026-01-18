@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useTongueDetection } from '../hooks/useTongueDetection'
 import { useDualTongueDetection } from '../hooks/useDualTongueDetection'
-import TongueCounter from './TongueCounter'
 import TugOfWar3D from './TugOfWar3D'
 import { AIOpponent } from '../utils/aiOpponent.js'
 
@@ -243,31 +242,75 @@ export default function TongueGame() {
     lastTimeRef.current = null
   }, [gameMode, player1StopDetection, dualStopDetection, player1ResetCount, dualResetCounts])
 
+  const modeLabel = gameMode === 'ai' ? 'Solo vs AI' : 'Dual Player'
+  const liveStatus = gameOver ? 'Finished round' : 'Live match'
+  const trackingStatus = gameMode === 'ai'
+    ? (player1IsDetecting ? 'Tracking tongue movement' : 'Waiting for camera')
+    : (dualIsDetecting ? 'Tracking both players' : 'Waiting for faces')
+
   // Show mode selector if not selected yet
   if (showModeSelector) {
     return (
-      <div className="relative w-full h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="text-center z-30 bg-black bg-opacity-80 rounded-2xl p-12 shadow-2xl max-w-2xl">
-          <h1 className="text-5xl font-bold text-white mb-4">Tug of War</h1>
-          <p className="text-xl text-gray-300 mb-8">Choose your game mode</p>
-          
-          <div className="flex flex-col gap-6">
+      <div className="relative min-h-screen overflow-hidden text-white" style={{ backgroundColor: '#1A3B58' }}>
+        <div className="absolute inset-0" style={{ backgroundColor: '#1A3B58' }} />
+        <div className="absolute -left-24 -top-20 w-96 h-96 blur-3xl rounded-full" style={{ backgroundColor: '#35679B', opacity: 0.4 }} />
+        <div className="absolute right-[-10rem] bottom-[-8rem] w-[28rem] h-[28rem] blur-3xl rounded-full" style={{ backgroundColor: '#FFD700', opacity: 0.3 }} />
+
+        <div className="relative max-w-4xl mx-auto px-8 py-16 flex flex-col items-center">
+          <div className="w-full max-w-2xl text-center mb-12">
+            <p className="text-[12px] tracking-[0.34em] uppercase mb-3" style={{ color: '#FFD700' }}>Motion Arena</p>
+            <h1 className="text-5xl md:text-6xl font-semibold leading-tight mb-12 text-white">Tongue Tug Arena</h1>
+          </div>
+
+          <div className="w-full max-w-xl flex flex-col gap-4">
             <button
               onClick={() => handleModeSelect('ai')}
-              className="px-8 py-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-xl shadow-lg transform hover:scale-105"
+              className="group rounded-3xl border p-8 text-left transition-all shadow-2xl flex flex-col gap-3 transform hover:scale-[1.02]"
+              style={{ 
+                backgroundColor: '#35679B', 
+                border: 'none',
+                outline: 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#4A7DB0'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#35679B'
+              }}
             >
-              <div className="text-2xl mb-2">🤖</div>
-              <div className="font-bold text-2xl mb-1">Play vs AI</div>
-              <div className="text-sm opacity-90">Challenge the computer opponent</div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs uppercase tracking-[0.3em] text-white">Solo</span>
+                <span className="px-3 py-1 text-xs rounded-full text-white" style={{ backgroundColor: '#2D3540', border: 'none' }}>AI Rival</span>
+              </div>
+              <div className="text-3xl font-semibold text-white">Play vs AI</div>
+              <p className="text-white text-sm opacity-90">
+                Adaptive opponent scales its pull as you move. Perfect for practice or demos.
+              </p>
             </button>
-            
+
             <button
               onClick={() => handleModeSelect('human')}
-              className="px-8 py-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors text-xl shadow-lg transform hover:scale-105"
+              className="group rounded-3xl border p-8 text-left transition-all shadow-2xl flex flex-col gap-3 transform hover:scale-[1.02]"
+              style={{ 
+                backgroundColor: '#35679B', 
+                border: 'none',
+                outline: 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#4A7DB0'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#35679B'
+              }}
             >
-              <div className="text-2xl mb-2">👥</div>
-              <div className="font-bold text-2xl mb-1">Play vs Human</div>
-              <div className="text-sm opacity-90">Two players, one camera</div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs uppercase tracking-[0.3em] text-white">Co-op</span>
+                <span className="px-3 py-1 text-xs rounded-full text-white" style={{ backgroundColor: '#2D3540', border: 'none' }}>Shared Cam</span>
+              </div>
+              <div className="text-3xl font-semibold text-white">Play vs Human</div>
+              <p className="text-white text-sm opacity-90">
+                Two players, one camera. Stay left and right of center to keep the rope balanced.
+              </p>
             </button>
           </div>
         </div>
@@ -276,8 +319,22 @@ export default function TongueGame() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      {/* Full Screen Game */}
+    <div className="relative min-h-screen overflow-hidden text-white" style={{ backgroundColor: '#1A3B58' }}>
+      <div className="absolute inset-0" style={{ backgroundColor: '#1A3B58' }} />
+      <div className="absolute -left-20 top-10 w-80 h-80 blur-3xl rounded-full" style={{ backgroundColor: '#35679B', opacity: 0.4 }} />
+      <div className="absolute right-[-18rem] bottom-[-10rem] w-[32rem] h-[32rem] blur-3xl rounded-full" style={{ backgroundColor: '#FFD700', opacity: 0.3 }} />
+
+      <div className="relative z-30 flex items-center justify-between px-6 pt-6">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="px-3 py-1 rounded-full text-xs uppercase tracking-[0.28em] text-white" style={{ backgroundColor: '#35679B', border: 'none' }}>
+            {modeLabel}
+          </span>
+          <span className="px-3 py-1 rounded-full text-xs" style={{ backgroundColor: '#FFD700', border: 'none', color: '#1A3B58' }}>
+            {liveStatus}
+          </span>
+        </div>
+      </div>
+
       <div className="absolute inset-0 w-full h-full">
         <TugOfWar3D
           player1Score={player1Score}
@@ -288,135 +345,165 @@ export default function TongueGame() {
         />
       </div>
 
-      {/* Camera Overlay - Top Left (AI mode) */}
+      {/* Camera Overlay - Solo AI mode */}
       {gameMode === 'ai' && (
-        <div className="absolute top-4 left-4 z-20 w-64 bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
-          <div className="relative w-full aspect-video">
-            <div className="absolute top-2 left-2 z-10 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs font-semibold">
-              You
+        <div className="absolute top-6 right-6 z-30 w-[22rem]">
+          <div className="rounded-2xl border overflow-hidden shadow-2xl" style={{ backgroundColor: '#35679B', border: 'none' }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white opacity-80">Player Cam</p>
+                <p className="text-sm text-white">Mirror view for calibration</p>
+              </div>
+              <span className="text-xs px-3 py-1 rounded-full text-white" style={{
+                backgroundColor: player1IsDetecting ? '#FFD700' : 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                color: player1IsDetecting ? '#1A3B58' : 'white'
+              }}>
+                {player1IsDetecting ? 'Live' : 'Init'}
+              </span>
             </div>
-            <video
-              ref={player1VideoRef}
-              playsInline
-              muted
-              className="w-full h-full object-contain"
-              style={{ transform: 'scaleX(-1)' }} // Mirror for user
-            />
-            <canvas
-              ref={player1CanvasRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-            
-            {/* Overlay Status */}
-            {!player1IsDetecting && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="text-white text-sm text-center px-2">
-                  {player1Error ? `Error: ${player1Error}` : 'Initializing...'}
+            <div className="relative w-full aspect-video bg-black/40">
+              <video
+                ref={player1VideoRef}
+                playsInline
+                muted
+                className="w-full h-full object-contain"
+                style={{ transform: 'scaleX(-1)' }} // Mirror for user
+              />
+              <canvas
+                ref={player1CanvasRef}
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                style={{ transform: 'scaleX(-1)' }}
+              />
+              
+              {!player1IsDetecting && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                  <div className="text-white text-sm text-center px-3">
+                    {player1Error ? `Error: ${player1Error}` : 'Initializing camera...'}
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {/* Detection Status Indicator */}
-            {player1IsDetecting && (
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
-                <div>Status: {player1TongueState}</div>
-              </div>
-            )}
+              )}
+              
+              {player1IsDetecting && (
+                <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-2 rounded-lg text-xs border border-white/10">
+                  <div className="font-semibold">State: {player1TongueState}</div>
+                  <div className="text-slate-300">Keep shoulders level for steady tracking</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Dual Camera Overlay - Top Center (Human mode) */}
+      {/* Dual Camera Overlay - Human mode */}
       {gameMode === 'human' && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[32rem] bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
-          <div className="relative w-full" style={{ aspectRatio: '21/9' }}>
-            {/* Player 1 Label - Left Side */}
-            <div className="absolute top-2 left-2 z-10 bg-blue-600 bg-opacity-90 text-white px-3 py-1 rounded text-xs font-semibold">
-              Player 1 (Left)
-            </div>
-            
-            {/* Player 2 Label - Right Side */}
-            <div className="absolute top-2 right-2 z-10 bg-red-600 bg-opacity-90 text-white px-3 py-1 rounded text-xs font-semibold">
-              Player 2 (Right)
-            </div>
-            
-            <video
-              ref={dualVideoRef}
-              playsInline
-              muted
-              className="w-full h-full object-contain"
-              style={{ transform: 'scaleX(-1)' }} // Mirror for user
-            />
-            <canvas
-              ref={dualCanvasRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-            
-            {/* Overlay Status */}
-            {!dualIsDetecting && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="text-white text-sm text-center px-2">
-                  {dualError ? `Error: ${dualError}` : 'Initializing...'}
-                </div>
+        <div className="absolute top-6 right-6 z-30 w-[22rem]">
+          <div className="rounded-2xl border overflow-hidden shadow-2xl" style={{ backgroundColor: '#35679B', border: 'none' }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white opacity-80">Shared Camera</p>
+                <p className="text-sm text-white">Left player on the left, right player on the right.</p>
               </div>
-            )}
-            
-            {/* Face Detection Status */}
-            {dualIsDetecting && (
-              <>
-                <div className="absolute bottom-2 left-2 bg-blue-600 bg-opacity-90 text-white px-2 py-1 rounded text-xs">
-                  <div>P1: {dualPlayer1TongueState}</div>
+              <span className="text-xs px-3 py-1 rounded-full text-white" style={{
+                backgroundColor: dualIsDetecting ? '#FFD700' : 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                color: dualIsDetecting ? '#1A3B58' : 'white'
+              }}>
+                {dualIsDetecting ? 'Tracking' : 'Init'}
+              </span>
+            </div>
+            <div className="relative w-full aspect-video bg-black/40">
+              <video
+                ref={dualVideoRef}
+                playsInline
+                muted
+                className="w-full h-full object-contain"
+                style={{ transform: 'scaleX(-1)' }} // Mirror for user
+              />
+              <canvas
+                ref={dualCanvasRef}
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                style={{ transform: 'scaleX(-1)' }}
+              />
+              
+              {!dualIsDetecting && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                  <div className="text-white text-sm text-center px-3">
+                    {dualError ? `Error: ${dualError}` : 'Initializing face detection...'}
+                  </div>
                 </div>
-                <div className="absolute bottom-2 right-2 bg-red-600 bg-opacity-90 text-white px-2 py-1 rounded text-xs">
-                  <div>P2: {dualPlayer2TongueState}</div>
-                </div>
-                <div className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
-                  Faces: {detectedFaces}/2
-                </div>
-              </>
-            )}
+              )}
+              
+              {dualIsDetecting && (
+                <>
+                  <div className="absolute top-3 left-3 text-white px-3 py-1 rounded text-xs font-semibold" style={{ backgroundColor: '#35679B' }}>
+                    Player 1 (Left)
+                  </div>
+                  <div className="absolute top-3 right-3 px-3 py-1 rounded text-xs font-semibold" style={{ backgroundColor: '#F1F2F6', color: '#2D3540' }}>
+                    Player 2 (Right)
+                  </div>
+                  <div className="absolute bottom-3 left-3 text-white px-3 py-2 rounded text-xs shadow-lg" style={{ backgroundColor: '#35679B' }}>
+                    P1: {dualPlayer1TongueState}
+                  </div>
+                  <div className="absolute bottom-3 right-3 px-3 py-2 rounded text-xs shadow-lg" style={{ backgroundColor: '#F1F2F6', color: '#2D3540' }}>
+                    P2: {dualPlayer2TongueState}
+                  </div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/65 text-white px-3 py-2 rounded text-xs border border-white/10">
+                    Faces detected: {detectedFaces}/2
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Counter Display - Bottom Right (only in AI mode) */}
-      {gameMode === 'ai' && (
-        <div className="absolute bottom-4 right-4 z-20">
-          <TongueCounter count={effectivePlayer1Count} tongueState={player1TongueState} />
+      {/* Controls - Bottom Center */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-full max-w-5xl px-4">
+        <div className="rounded-2xl border px-5 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" style={{ backgroundColor: '#2D3540', border: 'none' }}>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-white">
+            <span className="px-3 py-1 rounded-full text-white" style={{ backgroundColor: '#35679B', border: 'none' }}>
+              {gameMode === 'ai'
+                ? (player1IsActive ? 'Camera live' : 'Camera idle')
+                : `${detectedFaces}/2 faces`}
+            </span>
+            <span className="text-white opacity-80">{trackingStatus}</span>
+          </div>
+
+          <div className="flex flex-wrap gap-3 justify-end">
+            <button
+              onClick={gameMode === 'ai' 
+                ? (player1IsActive ? player1StopDetection : player1StartDetection)
+                : (dualIsActive ? dualStopDetection : dualStartDetection)
+              }
+              className="px-5 py-3 rounded-xl font-semibold transition transform hover:-translate-y-0.5 text-white border"
+              style={{
+                backgroundColor: (gameMode === 'ai' ? player1IsActive : dualIsActive) ? '#35679B' : '#FFD700',
+                border: 'none',
+                outline: 'none',
+                color: (gameMode === 'ai' ? player1IsActive : dualIsActive) ? 'white' : '#1A3B58'
+              }}
+            >
+              {(gameMode === 'ai' ? player1IsActive : dualIsActive) ? 'Pause Tracking' : 'Start Tracking'}
+            </button>
+            
+            <button
+              onClick={handleReset}
+              className="px-5 py-3 rounded-xl font-semibold border transition transform hover:-translate-y-0.5"
+              style={{ backgroundColor: '#F1F2F6', border: 'none', outline: 'none', color: '#2D3540' }}
+            >
+              Reset Game
+            </button>
+
+            <button
+              onClick={handleReturnToModeSelect}
+              className="px-5 py-3 rounded-xl font-semibold text-white border transition transform hover:-translate-y-0.5"
+              style={{ backgroundColor: '#1A3B58', border: 'none', outline: 'none' }}
+            >
+              Change Mode
+            </button>
+          </div>
         </div>
-      )}
-
-      {/* Controls - Bottom Left */}
-      <div className="absolute bottom-4 left-4 z-20 flex gap-4">
-        <button
-          onClick={gameMode === 'ai' 
-            ? (player1IsActive ? player1StopDetection : player1StartDetection)
-            : (dualIsActive ? dualStopDetection : dualStartDetection)
-          }
-          className={`px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg ${
-            (gameMode === 'ai' ? player1IsActive : dualIsActive)
-              ? 'bg-red-600 hover:bg-red-700 text-white'
-              : 'bg-green-600 hover:bg-green-700 text-white'
-          }`}
-        >
-          {(gameMode === 'ai' ? player1IsActive : dualIsActive) ? 'Stop' : 'Start'}
-        </button>
-        
-        <button
-          onClick={handleReset}
-          className="px-6 py-3 rounded-lg font-semibold bg-gray-600 hover:bg-gray-700 text-white transition-colors shadow-lg"
-        >
-          Reset Game
-        </button>
-
-        <button
-          onClick={handleReturnToModeSelect}
-          className="px-6 py-3 rounded-lg font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-colors shadow-lg"
-        >
-          Change Mode
-        </button>
       </div>
     </div>
   )

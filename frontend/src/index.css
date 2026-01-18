@@ -1,5 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Chivo+Mono:wght@500&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
+
+:root {
+  --panel: #0b1221;
+  --panel-strong: #0f172a;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   margin: 0;
@@ -7,10 +18,40 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #03040a;
+  color: #e2e8f0;
+  font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 #root {
   width: 100%;
   height: 100%;
+}
+
+::selection {
+  background: #38bdf8;
+  color: #0b1224;
+}
+
+button {
+  outline: none;
+}
+
+button:focus,
+button:focus-visible {
+  outline: none;
+}
+
+.panel {
+  background-color: var(--panel);
+  border-radius: 1.5rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.panel-strong {
+  background-color: var(--panel-strong);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
 }
